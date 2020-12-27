@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace GolbengFramework.Algorithm
+namespace Golbeng.Framework.Algorithm
 {
 	public partial class CTile2DPathFinder
 	{
