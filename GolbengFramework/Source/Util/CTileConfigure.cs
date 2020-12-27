@@ -9,11 +9,16 @@ namespace Golbeng.Framework.Util
 {
 	public class CTileConfigure
 	{
-		public Vector2 TileCenterBias { get; private set; }
-
-		public CTileConfigure(Vector2 cetnerBias)
+		public enum TileCellAnchor
 		{
-			TileCenterBias = cetnerBias;
+			BottomLeft	// 현재 BoottomLeft Anchor 기준으로 CeillIndex 계산
+		}
+
+		public Vector2Int BasisTileSize { get; private set; }
+
+		public CTileConfigure(Vector2Int basisTileSize)
+		{
+			BasisTileSize = basisTileSize;
 		}
 
 		public Vector3 ConvertToTilePosition(int x, int y)
@@ -23,7 +28,15 @@ namespace Golbeng.Framework.Util
 
 		public Vector3 ConvertToTilePosition(Vector2Int cellIndex)
 		{
-			return new Vector3(TileCenterBias.x + cellIndex.x, TileCenterBias.y + cellIndex.y, 0.0f);
+			return ConvertToTilePosition(cellIndex, BasisTileSize);
+		}
+
+		public Vector3 ConvertToTilePosition(Vector2Int cellIndex, Vector2Int tileSize)
+		{
+			float resultX = cellIndex.x + (tileSize.x * 0.5f);
+			float resultY = cellIndex.y + (tileSize.y * 0.5f);
+
+			return new Vector3(resultX, resultY, 0.0f);
 		}
 
 		public Vector2Int ConvertToTileIndex(float x, float y, float z)
@@ -33,20 +46,34 @@ namespace Golbeng.Framework.Util
 
 		public Vector2Int ConvertToTileIndex(Vector3 position)
 		{
-			var x = position.x - TileCenterBias.x;
-			x = Mathf.Round(x) + TileCenterBias.x;
+			return ConvertToTileIndex(position, BasisTileSize);
+		}
 
-			var y = position.y - TileCenterBias.y;
-			y = Mathf.Round(y) + TileCenterBias.y;
+		public Vector2Int ConvertToTileIndex(Vector3 position, Vector2Int tileSize)
+		{
+			float offsetX = tileSize.x * 0.5f;
+			float offsetY = tileSize.y * 0.5f;
 
-			return new Vector2Int(Mathf.CeilToInt(x - TileCenterBias.x), Mathf.CeilToInt(y - TileCenterBias.y));
+			var x = position.x - offsetX;
+			x = Mathf.Round(x) + offsetX;
+
+			var y = position.y - offsetY;
+			y = Mathf.Round(y) + offsetY;
+
+			return new Vector2Int(Mathf.CeilToInt(x - offsetX), Mathf.CeilToInt(y - offsetY));
 		}
 
 		public Vector3 NormalizeTilePosition(Vector3 position)
 		{
-			var cellIndex = ConvertToTileIndex(position);
-			return ConvertToTilePosition(cellIndex);
+			return NormalizeTilePosition(position, BasisTileSize);
 		}
 
+		public Vector3 NormalizeTilePosition(Vector3 position, Vector2Int tileSize)
+		{
+			var cellIndex = ConvertToTileIndex(position, tileSize);
+			var normalizePosition = ConvertToTilePosition(cellIndex, tileSize);
+
+			return new Vector3(normalizePosition.x, normalizePosition.y, position.z);
+		}
 	}
 }
