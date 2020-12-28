@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Golbeng.Framework.Util
+namespace Golbeng.Framework._2D.Tile
 {
 	public class CTileConfigure
 	{
@@ -74,6 +74,21 @@ namespace Golbeng.Framework.Util
 			var normalizePosition = ConvertToTilePosition(cellIndex, tileSize);
 
 			return new Vector3(normalizePosition.x, normalizePosition.y, position.z);
+		}
+	
+		public IEnumerable<Vector2Int> GetTileIndices(Vector3 position, Vector2Int tileSize)
+		{
+			var normalizeTilePosition = NormalizeTilePosition(position, tileSize);
+
+			var basisCellIndex = ConvertToTileIndex(normalizeTilePosition, tileSize);
+
+			for (int x = 0; x < tileSize.x; x++)
+			{
+				for(int y = 0; y < tileSize.y; y++)
+				{
+					yield return new Vector2Int(basisCellIndex.x + x, basisCellIndex.y + y);
+				}
+			}
 		}
 	}
 }
