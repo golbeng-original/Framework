@@ -94,7 +94,7 @@ namespace Golbeng.Framework.Manager
 				yield return item as T;
 			}
 		}
-		public T GetTableData<T>(int primaryKey) where T : TblBase
+		public T GetTableData<T>(uint primaryKey) where T : TblBase
 		{
 			Type type = typeof(T);
 
@@ -103,9 +103,9 @@ namespace Golbeng.Framework.Manager
 
 			var items = _conatiner[type];
 
-			return items.SingleOrDefault(tblBase => tblBase.PrimaryKey == primaryKey) as T;
+			return items.SingleOrDefault(tblBase => tblBase.primarykey == primaryKey) as T;
 		}
-		public T GetTableData<T>(int primaryKey, int secondaryKey) where T : TblBase
+		public T GetTableData<T>(uint primaryKey, uint secondaryKey) where T : TblBase
 		{
 			Type type = typeof(T);
 
@@ -114,7 +114,7 @@ namespace Golbeng.Framework.Manager
 
 			var items = _conatiner[type];
 
-			return items.SingleOrDefault(tblBase => tblBase.PrimaryKey == primaryKey && tblBase.SecondaryKey == secondaryKey) as T;
+			return items.SingleOrDefault(tblBase => tblBase.primarykey == primaryKey && tblBase.secondarykey == secondaryKey) as T;
 		}
 	}
 }

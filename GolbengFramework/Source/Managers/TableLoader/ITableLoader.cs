@@ -62,6 +62,16 @@ namespace Golbeng.Framework.Loader
 								int value = reader.GetInt32(ordinal);
 								property.SetValue(newTbl, value);
 							}
+							else if (property.PropertyType == typeof(uint))
+							{
+								uint value = (uint)reader.GetInt64(ordinal);
+								property.SetValue(newTbl, value);
+							}
+							else if (property.PropertyType == typeof(float))
+							{
+								float value = reader.GetFloat(ordinal);
+								property.SetValue(newTbl, value);
+							}
 							else if (property.PropertyType == typeof(string))
 							{
 								string value = reader.GetValue(ordinal) as string;
