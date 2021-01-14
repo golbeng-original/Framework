@@ -8,18 +8,18 @@ using UnityEngine;
 
 namespace Golbeng.Framework._2D.Tile.Components
 {
-	public delegate void MouseDownEventHandler(CObjectMoveTileComponent moveTIleComponent);
-	public delegate bool MouseUpEventHandler(CObjectMoveTileComponent moveTIleComponent);
-	public delegate void MouseEventFinishHandler(CObjectMoveTileComponent moveTIleComponent);
+	public delegate void MouseDownEventHandler<TTileState>(CObjectMoveTileComponent<TTileState> moveTIleComponent);
+	public delegate bool MouseUpEventHandler<TTileState>(CObjectMoveTileComponent<TTileState> moveTIleComponent);
+	public delegate void MouseEventFinishHandler<TTileState>(CObjectMoveTileComponent<TTileState> moveTIleComponent);
 
-	public class CObjectMoveTileComponent : CObjectTileComponent
+	public class CObjectMoveTileComponent<TTileState> : CObjectTileComponent<TTileState>
 	{
 		private Vector3 _touchOffset;
 		private Vector3 _prevTilePosition;
 
-		public event MouseDownEventHandler MouseDownEventHandler;
-		public event MouseUpEventHandler MouseUpEventHandler;
-		public event MouseEventFinishHandler MouseEventFinishHandler;
+		public event MouseDownEventHandler<TTileState> MouseDownEventHandler;
+		public event MouseUpEventHandler<TTileState> MouseUpEventHandler;
+		public event MouseEventFinishHandler<TTileState> MouseEventFinishHandler;
 
 		private Vector3 GetTouchPosition()
 		{

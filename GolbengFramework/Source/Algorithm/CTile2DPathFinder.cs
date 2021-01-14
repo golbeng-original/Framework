@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Golbeng.Framework.Algorithm
 {
-	public partial class CTile2DPathFinder
+	public partial class CTile2DPathFinder<TTileState>
 	{
 		public enum HuristicType
 		{
@@ -31,16 +31,16 @@ namespace Golbeng.Framework.Algorithm
 
 		public class PathMap
 		{
-			private Dictionary<(int x, int y), int> _pathMapInfo = new Dictionary<(int x, int y), int>();
+			private Dictionary<(int x, int y), TTileState> _pathMapInfo = new Dictionary<(int x, int y), TTileState>();
 
-			public int this[int x, int y]
+			public TTileState this[int x, int y]
 			{
 				get
 				{
 					var key = (x, y);
 
 					if (_pathMapInfo.ContainsKey(key) == false)
-						return -1;
+						return default(TTileState);
 
 					return _pathMapInfo[key];
 				}
@@ -83,7 +83,7 @@ namespace Golbeng.Framework.Algorithm
 	}
 
 
-	public partial class CTile2DPathFinder
+	public partial class CTile2DPathFinder<TTileState>
 	{
 		private List<AStarNode> _openList = new List<AStarNode>();
 		private Dictionary<(int X, int Y), AStarNode> _visitedNodes = new Dictionary<(int X, int Y), AStarNode>();
@@ -101,7 +101,7 @@ namespace Golbeng.Framework.Algorithm
 
 		public double HuristicWeight { get; set; } = 1;
 
-		public HashSet<int> BlockValues { get; private set; } = new HashSet<int>();
+		public HashSet<TTileState> BlockValues { get; private set; } = new HashSet<TTileState>();
 
 		public List<(int X, int Y)> FindPathList { get; private set; } = new List<(int X, int Y)>();
 
@@ -110,7 +110,7 @@ namespace Golbeng.Framework.Algorithm
 			ActivePathMap = pathMap;
 		}
 
-		public bool Prepare()
+		private bool Prepare()
 		{
 			if (StartNode == null)
 				return false;
@@ -131,6 +131,9 @@ namespace Golbeng.Framework.Algorithm
 
 		public bool FindPath()
 		{
+			if (Prepare() == false)
+				return false;
+
 			while (FindPathStep() == false) { }
 
 			return FindPathList.Count == 0 ? false : true;
@@ -155,6 +158,10 @@ namespace Golbeng.Framework.Algorithm
 
 			var currNode = _openList[0];
 			_openList.RemoveAt(0);
+
+			// 시작부터 막혀있다..
+			if (IsBlock(currNode.X, currNode.Y) == true)
+				return false;
 
 			currNode.IsClosed = true;
 			if (currNode == EndNode)
@@ -331,9 +338,9 @@ namespace Golbeng.Framework.Algorithm
 
 		private bool IsBlock(int x, int y)
 		{
-			int nodeType = ActivePathMap[x, y];
-			if (nodeType == -1)
-				return true;
+			var nodeType = ActivePathMap[x, y];
+			if (nodeType.Equals(default(TTileState)))
+				return false;
 
 			return BlockValues.Contains(nodeType) == true ? true : false;
 		}

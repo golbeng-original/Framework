@@ -1,14 +1,28 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Golbeng.Framework._2D.Tile.Components
 {
-	public class CObjectTileComponent : MonoBehaviour
+	public class CObjectTileComponent<TTileState> : MonoBehaviour
 	{
-		private CTileConfigure _tileConfigure = CTileAgent.TileConfigure;
+		private CTileConfigure _tileConfigure = CTileAgent<TTileState>.TileConfigure;
 
 		public Vector2Int TileSize;
 
-		public virtual int TileType { get; } = -1;
+		public virtual Vector2Int CellIndex
+		{
+			set
+			{
+				transform.position = _tileConfigure.ConvertToTilePosition(value, TileSize);
+			}
+
+			get
+			{
+				return _tileConfigure.ConvertToTileIndex(transform.position, TileSize);
+			}
+		}
+
+		public virtual TTileState TileType { get; } = default(TTileState);
 
 		protected virtual void Awake() {}
 

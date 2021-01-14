@@ -9,7 +9,7 @@ namespace Golbeng.Framework._2D.Tile.Components
 {
 	public static class CObjectTileExtenstion
 	{
-		public static IEnumerable<Vector2Int> GetTileIndices(this CObjectTileComponent objectTile, CTileConfigure tileConfigure)
+		public static IEnumerable<Vector2Int> GetTileIndices<TTileState>(this CObjectTileComponent<TTileState> objectTile, CTileConfigure tileConfigure)
 		{
 			return tileConfigure.GetTileIndices(objectTile.transform.position, objectTile.TileSize);
 		}

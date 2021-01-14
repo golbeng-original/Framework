@@ -10,22 +10,59 @@ using Golbeng.Framework._2D.Tile.Components;
 
 namespace Golbeng.Framework._2D.Tile
 {
-	public partial class CTileAgent
+	public partial class CTileAgent<TTileState>
 	{
-		public static CTileConfigure TileConfigure { get; set; } = new CTileConfigure(new Vector2Int(1, 1));
+		private static readonly Vector2Int[] ReleativeNeighborPos = {
+			new Vector2Int(0, 1),	//↑
+			new Vector2Int(-1, 0),	// ←
+			new Vector2Int(1, 0),	// →
+			new Vector2Int(0, -1),	// ↓
+		};
+
+		private static readonly Vector2Int[] ReleativeNeighborObstaclePos = {
+			new Vector2Int(1, 1),	// ↗
+			new Vector2Int(1, -1),	// ↘
+			new Vector2Int(-1, -1),	// ↙
+			new Vector2Int(-1, 1),	// ↖
+		};
 	}
 
-	public partial class CTileAgent
-	{
-		private Dictionary<Vector2Int, int> _backgroundTileState = new Dictionary<Vector2Int, int>();
 
-		private HashSet<CObjectTileComponent> _registedObjectTiles = new HashSet<CObjectTileComponent>();
-		private Dictionary<Vector2Int, CObjectTileComponent> _registedTileState = new Dictionary<Vector2Int, CObjectTileComponent>();
+	public partial class CTileAgent<TTileState>
+	{
+		public static CTileConfigure TileConfigure { get; set; } = new CTileConfigure(new Vector2Int(1, 1));
+	
+		public CTile2DPathFinder<TTileState> MakePathFinder(params TTileState[] addtionBlockValues)
+		{
+			var newPathFinder = new CTile2DPathFinder<TTileState>(PathMap);
+
+			foreach(var block in BlockTiles)
+			{
+				newPathFinder.BlockValues.Add(block);
+			}
+
+			foreach(var block in addtionBlockValues)
+			{
+				newPathFinder.BlockValues.Add(block);
+			}
+
+			return newPathFinder;
+		}
+	}
+
+	public partial class CTileAgent<TTileState>
+	{
+		private Dictionary<Vector2Int, TTileState> _backgroundTileState = new Dictionary<Vector2Int, TTileState>();
+
+		private HashSet<CObjectTileComponent<TTileState>> _registedObjectTiles = new HashSet<CObjectTileComponent<TTileState>>();
+		private Dictionary<Vector2Int, CObjectTileComponent<TTileState>> _registedTileState = new Dictionary<Vector2Int, CObjectTileComponent<TTileState>>();
 
 		public bool UsePathMap { get; set; } = true;
-		public CTile2DPathFinder.PathMap PathMap { get; set; } = new CTile2DPathFinder.PathMap();
+		public CTile2DPathFinder<TTileState>.PathMap PathMap { get; set; } = new CTile2DPathFinder<TTileState>.PathMap();
 
-		public void UpdateBackgroundTileType(Tilemap tileMap, Func<TileBase, int> tileStateFunc)
+		public HashSet<TTileState> BlockTiles { get; private set; } = new HashSet<TTileState>();
+
+		public void UpdateBackgroundTileType(Tilemap tileMap, Func<TileBase, TTileState> tileStateFunc)
 		{
 			if (tileMap == null)
 				return;
@@ -47,26 +84,45 @@ namespace Golbeng.Framework._2D.Tile
 			}
 		}
 
-		public void RegisterObjectTile(CObjectTileComponent objectTile)
+		public bool IsRegisterObjectTile(CObjectTileComponent<TTileState> objectTile)
+		{
+			foreach(var position in objectTile.GetTileIndices(TileConfigure))
+			{
+				if (IsRegisterCellIndex(position) == false)
+					return false;
+			}
+
+			return true;
+		}
+
+		public bool IsRegisterCellIndex(Vector2Int cellIndex)
+		{
+			var tileState = GetTileState(cellIndex);
+			return BlockTiles.Contains(tileState) == true ? false : true; 
+		}
+
+		public bool RegisterObjectTile(CObjectTileComponent<TTileState> objectTile)
 		{
 			if (_registedObjectTiles.Contains(objectTile) == true)
-				return;
+				return false;
+
+			if (IsRegisterObjectTile(objectTile) == false)
+				return false;
 
 			_registedObjectTiles.Add(objectTile);
 
 			foreach(var position in objectTile.GetTileIndices(TileConfigure))
 			{
-				var registedPosition = new Vector2Int(position.x, position.y);
-
-				_registedTileState.Add(registedPosition, objectTile);
+				_registedTileState.Add(position, objectTile);
 
 				if (UsePathMap == true)
-					PathMap[position.x, position.y] = GetTileState(registedPosition);
-
+					PathMap[position.x, position.y] = GetTileState(position);
 			}
+
+			return true;
 		}
 
-		public void UnregisterObjectTile(CObjectTileComponent objectTile)
+		public void UnregisterObjectTile(CObjectTileComponent<TTileState> objectTile)
 		{
 			_registedObjectTiles.Remove(objectTile);
 
@@ -86,7 +142,7 @@ namespace Golbeng.Framework._2D.Tile
 			});
 		}
 
-		public int GetTileState(Vector2Int cellPosition, CObjectTileComponent focusTile = null)
+		public TTileState GetTileState(Vector2Int cellPosition, CObjectTileComponent<TTileState> focusTile = null)
 		{
 			var registedTile = GetRegistedObjectTile(cellPosition);
 			if(registedTile != null)
@@ -100,15 +156,15 @@ namespace Golbeng.Framework._2D.Tile
 			return GetBackgroundTileState(cellPosition);
 		}
 
-		public int GetBackgroundTileState(Vector2Int cellPosition)
+		public TTileState GetBackgroundTileState(Vector2Int cellPosition)
 		{
 			if (_backgroundTileState.ContainsKey(cellPosition) == false)
-				return -1;
+				return default(TTileState);
 
 			return _backgroundTileState[cellPosition];
 		}
 
-		public CObjectTileComponent GetRegistedObjectTile(Vector2Int cellPosition)
+		public CObjectTileComponent<TTileState> GetRegistedObjectTile(Vector2Int cellPosition)
 		{
 			if (_registedTileState.ContainsKey(cellPosition) == false)
 				return null;
@@ -116,11 +172,31 @@ namespace Golbeng.Framework._2D.Tile
 			return _registedTileState[cellPosition];
 		}
 	
-		public IEnumerable<(Vector2Int Position, int Type)> GetBackgroundTiles()
+		public IEnumerable<(Vector2Int Position, TTileState Type)> GetBackgroundTiles()
 		{
 			foreach(var kv in _backgroundTileState)
 			{
 				yield return (kv.Key, kv.Value);
+			}
+		}
+	
+		public IEnumerable<(Vector2Int Position, TTileState state)> GetNeighborCellStates(Vector2Int cellPosition, bool withObstacle = false)
+		{
+			foreach(var releativePos in ReleativeNeighborPos)
+			{
+				var checkPos = cellPosition + releativePos;
+
+				yield return (checkPos, GetTileState(checkPos));
+			}
+
+			if(withObstacle == true)
+			{
+				foreach (var releativePos in ReleativeNeighborObstaclePos)
+				{
+					var checkPos = cellPosition + releativePos;
+
+					yield return (checkPos, GetTileState(checkPos));
+				}
 			}
 		}
 	}

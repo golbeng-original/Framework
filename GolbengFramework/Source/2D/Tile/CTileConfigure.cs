@@ -82,11 +82,16 @@ namespace Golbeng.Framework._2D.Tile
 
 			var basisCellIndex = ConvertToTileIndex(normalizeTilePosition, tileSize);
 
+			return GetTileIndices(basisCellIndex, tileSize);
+		}
+
+		public IEnumerable<Vector2Int> GetTileIndices(Vector2Int cellIndex, Vector2Int tileSize)
+		{
 			for (int x = 0; x < tileSize.x; x++)
 			{
-				for(int y = 0; y < tileSize.y; y++)
+				for (int y = 0; y < tileSize.y; y++)
 				{
-					yield return new Vector2Int(basisCellIndex.x + x, basisCellIndex.y + y);
+					yield return new Vector2Int(cellIndex.x + x, cellIndex.y + y);
 				}
 			}
 		}
