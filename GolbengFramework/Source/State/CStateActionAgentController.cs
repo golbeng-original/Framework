@@ -176,7 +176,7 @@ namespace Golbeng.Framework.State
 				// 조건에서 실패함..
 				if (_stateChangePredicateMapping[type].Invoke() == false)
 				{
-					Debug.Log($"UpdateState Feil Predicate false paramName = {animteParameterName}, value = {state}");
+					Debug.Log($"UpdateState Fail Predicate false paramName = {animteParameterName}, value = {state}");
 					return;
 				}
 			}

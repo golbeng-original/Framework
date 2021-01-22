@@ -46,22 +46,28 @@ namespace Golbeng.Framework.Manager
 			_registerTableType.Add(typeof(T));
 		}
 
-		public async Task LoadAllTableAsync()
+		// async await Version
+		public WaitForTask LoadAllTableAsync()
 		{
-			var methodInfo = typeof(CTableManager).GetMethod("LoadTable");
-
-			List <Task> taskList = new List<Task>();
-			foreach(var table in _registerTableType)
+			var waitForTask = new WaitForTask(async () =>
 			{
-				var task = Task.Run(() =>
-				{
-					var loadTableMethod = methodInfo.MakeGenericMethod(table);
-					loadTableMethod.Invoke(this, null);
-				});
-				taskList.Add(task);
-			}
+				var methodInfo = typeof(CTableManager).GetMethod("LoadTable");
 
-			await Task.WhenAll(taskList);
+				List<Task> taskList = new List<Task>();
+				foreach (var table in _registerTableType)
+				{
+					var task = Task.Run(() =>
+					{
+						var loadTableMethod = methodInfo.MakeGenericMethod(table);
+						loadTableMethod.Invoke(this, null);
+					});
+					taskList.Add(task);
+				}
+
+				await Task.WhenAll(taskList);
+			});
+
+			return waitForTask;
 		}
 
 		public void LoadTable<T>() where T : class, new()

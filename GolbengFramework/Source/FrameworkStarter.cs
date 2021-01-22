@@ -11,6 +11,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using ILogger = Golbeng.Framework.Commons.ILogger;
+using System.Collections;
+using Golbeng.Framework.Managers;
 
 namespace Golbeng.Framework
 {
@@ -52,25 +54,47 @@ namespace Golbeng.Framework
 			ManagerProvider.SignalRConfig.SendMethod = "SendHub";
 			ManagerProvider.SignalRConfig.ReceiveMethod = "ReceiveHub";
 			//
-
-			RegisterTable();
 		}
 
-		private void RegisterTable()
+		public AsyncWorker LaodTableManager(MonoBehaviour dispatcher)
 		{
+			AsyncWorker worker = new AsyncWorker();
+			worker.JobList.Add(LaodTableManager);
+			worker.JobList.Add(LoadIconManager);
+
+			worker.Run(dispatcher);
+
+			return worker;
+		}
+
+		private IEnumerator LaodTableManager(AsyncWorker.WorkArgs args)
+		{
+			args.Description = "테이블 로드 시작";
+
 			var tableManager = CTableManager.Instance;
 			tableManager.RegisterTable<TblExample_table>();
+
+			yield return tableManager.LoadAllTableAsync();
+			
+			args.Description = "테이블 로드 완료";
 		}
 
-		public AsyncResult LoadManagers()
+		private IEnumerator LoadIconManager(AsyncWorker.WorkArgs args)
+		{
+			args.Description = "리소스 로드 시작";
+
+			CSpriteResourceManager.Instance.RegisterIconRootPath("Sprites/Icons/Test");
+
+			yield return CSpriteResourceManager.Instance.Load(args.Dispatcher);
+
+			args.Description = "리소스 로드 완료";
+
+			yield return null;
+		}
+
+		public AsyncResult LoadAsyncAwaitTest()
 		{
 			var asyncResult = new AsyncResult();
-			asyncResult.Add(async (args) =>
-			{
-				await CTableManager.Instance.LoadAllTableAsync();
-				args.Description =  "테이블 완료!!";
-			});
-
 			asyncResult.Add(async (args) =>
 			{
 				await Task.Delay(1000);

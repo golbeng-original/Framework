@@ -1,13 +1,95 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace Golbeng.Framework.Commons
 {
+	public delegate IEnumerator JobActionHandler(AsyncWorker.WorkArgs args);
+
+	public class WaitForTask : CustomYieldInstruction
+	{
+		private bool _isComplete = false;
+		private Action _action;
+
+		public bool IsDone { get => _isComplete == true ? true : false; }
+		public override bool keepWaiting { get => _isComplete == false ? true : false; }
+
+		public WaitForTask(Action action)
+		{
+			_action = action;
+			_isComplete = false;
+
+			Task.Run(() =>
+			{
+				_action();
+				_isComplete = true;
+			});
+		}
+	}
+
+	public class AsyncWorker : CustomYieldInstruction
+	{
+		public class WorkArgs
+		{
+			private AsyncWorker _targetWorker;
+
+			public WorkArgs(AsyncWorker worker, MonoBehaviour dispatcher)
+			{
+				_targetWorker = worker;
+				Dispatcher = dispatcher;
+			}
+
+			public MonoBehaviour Dispatcher { get; private set; }
+			public string Description
+			{
+				set => _targetWorker.ProgressDescription = value;
+			}
+			public bool Cancel { get; set; } = false;
+		}
+
+		public List<JobActionHandler> JobList = new List<JobActionHandler>();
+
+		public override bool keepWaiting { get => IsDone == false ? true : false; }
+
+		public bool IsDone { get; private set; } = false;
+		public bool IsCancel { get; private set; } = false;
+
+		public float Progress { get; private set; } = 0.0f;
+
+		public string ProgressDescription { get; private set; } = "";
+
+		public void Run(MonoBehaviour dispatcher)
+		{
+			dispatcher.StartCoroutine(_Run(dispatcher));
+		}
+
+		private IEnumerator _Run(MonoBehaviour dispatcher)
+		{
+			WorkArgs args = new WorkArgs(this, dispatcher);
+			foreach (var job in JobList)
+			{
+				Progress = (int)((float)(JobList.IndexOf(job) + 1) / (float)JobList.Count * 100.0f);
+
+				yield return job(args);
+
+				if (args.Cancel == true)
+				{
+					IsDone = true;
+					IsCancel = true;
+					yield break;
+				}
+			}
+
+			IsDone = true;
+		}
+	}
+
 	public class AsyncResult
 	{
 		private class AsyncJob
