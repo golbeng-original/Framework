@@ -29,69 +29,77 @@ namespace Golbeng.Framework.Loader
 			try
 			{
 				await sqliteConnection.OpenAsync();
-			}
-			catch
-			{
-				return null;
-			}
 
-			var contaner = new HashSet<TblBase>();
-			using (var cmd = sqliteConnection.CreateCommand())
-			{
-				cmd.CommandText = $"SELECT * FROM {tableMeta.TableName}";
-
-				using (var reader = await cmd.ExecuteReaderAsync())
+				var contaner = new HashSet<TblBase>();
+				using (var cmd = sqliteConnection.CreateCommand())
 				{
-					Type newTblType = typeof(T);
-					var properties = newTblType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+					cmd.CommandText = $"SELECT * FROM {tableMeta.TableName}";
 
-					while (reader.Read())
+					using (var reader = await cmd.ExecuteReaderAsync())
 					{
-						TblBase newTbl = new T() as TblBase;
-						if (newTbl == null)
-							break;
+						Type newTblType = typeof(T);
+						var properties = newTblType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-						foreach (var property in properties)
+						while (reader.Read())
 						{
-							var ordinal = reader.GetOrdinal(property.Name);
-							if (ordinal == -1)
-								continue;
+							TblBase newTbl = new T() as TblBase;
+							if (newTbl == null)
+								break;
 
-							if (property.PropertyType == typeof(int))
+							foreach (var property in properties)
 							{
-								int value = reader.GetInt32(ordinal);
-								property.SetValue(newTbl, value);
+								int ordinal = -1;
+								try
+								{
+									ordinal = reader.GetOrdinal(property.Name);
+								}
+								catch { }
+
+								if (ordinal == -1)
+									continue;
+
+								if (property.PropertyType == typeof(int))
+								{
+									int value = reader.GetInt32(ordinal);
+									property.SetValue(newTbl, value);
+								}
+								else if (property.PropertyType == typeof(uint))
+								{
+									uint value = (uint)reader.GetInt64(ordinal);
+									property.SetValue(newTbl, value);
+								}
+								else if (property.PropertyType == typeof(float))
+								{
+									float value = reader.GetFloat(ordinal);
+									property.SetValue(newTbl, value);
+								}
+								else if (property.PropertyType == typeof(string))
+								{
+									string value = reader.GetString(ordinal);
+									property.SetValue(newTbl, value);
+								}
+								else if (property.PropertyType == typeof(bool))
+								{
+									bool value = reader.GetBoolean(ordinal);
+									property.SetValue(newTbl, value);
+								}
 							}
-							else if (property.PropertyType == typeof(uint))
-							{
-								uint value = (uint)reader.GetInt64(ordinal);
-								property.SetValue(newTbl, value);
-							}
-							else if (property.PropertyType == typeof(float))
-							{
-								float value = reader.GetFloat(ordinal);
-								property.SetValue(newTbl, value);
-							}
-							else if (property.PropertyType == typeof(string))
-							{
-								string value = reader.GetValue(ordinal) as string;
-								property.SetValue(newTbl, value);
-							}
-							else if (property.PropertyType == typeof(bool))
-							{
-								bool value = reader.GetBoolean(ordinal);
-								property.SetValue(newTbl, value);
-							}
+
+							contaner.Add(newTbl);
 						}
-
-						contaner.Add(newTbl);
 					}
 				}
+
+				return contaner;
 			}
-
-			sqliteConnection.Close();
-
-			return contaner;
+			catch(Exception e)
+			{
+				throw e;
+			}
+			finally
+			{
+				sqliteConnection.Close();
+			}
 		}
 
 		public abstract HashSet<TblBase> LoadTable<T>() where T : class, new();

@@ -34,6 +34,8 @@ namespace Golbeng.Framework
 			}
 
 			ManagerProvider.IsEditMode = Application.installMode == ApplicationInstallMode.Editor ? true : false;
+			if(ManagerProvider.IsEditMode == true)
+				ManagerProvider.CurrentPlatform = ManagerProvider.Platform.Windows;
 
 			ManagerProvider.StreamingAssestsPath = Application.streamingAssetsPath;
 			ManagerProvider.PersistentDataPath = Application.persistentDataPath;
@@ -56,6 +58,8 @@ namespace Golbeng.Framework
 			//
 		}
 
+		// 예시 1.
+		/*
 		public AsyncWorker LaodTableManager(MonoBehaviour dispatcher)
 		{
 			AsyncWorker worker = new AsyncWorker();
@@ -83,15 +87,18 @@ namespace Golbeng.Framework
 		{
 			args.Description = "리소스 로드 시작";
 
-			CSpriteResourceManager.Instance.RegisterIconRootPath("Sprites/Icons/Test");
+			CResourceManage.Instance.RegisterIconRootPath<Sprite>("Sprites/Icons/Test");
 
-			yield return CSpriteResourceManager.Instance.Load(args.Dispatcher);
+			yield return CResourceManage.Instance.Load(args.Dispatcher);
 
 			args.Description = "리소스 로드 완료";
 
 			yield return null;
 		}
+		*/
 
+		// 예시 2.
+		/*
 		public AsyncResult LoadAsyncAwaitTest()
 		{
 			var asyncResult = new AsyncResult();
@@ -117,5 +124,6 @@ namespace Golbeng.Framework
 
 			return asyncResult;
 		}
+		*/
 	}
 }

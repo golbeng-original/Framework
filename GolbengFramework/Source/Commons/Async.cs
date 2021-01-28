@@ -16,6 +16,7 @@ namespace Golbeng.Framework.Commons
 	{
 		private bool _isComplete = false;
 		private Action _action;
+		private Func<Task> _taskAction;
 
 		public bool IsDone { get => _isComplete == true ? true : false; }
 		public override bool keepWaiting { get => _isComplete == false ? true : false; }
@@ -28,6 +29,18 @@ namespace Golbeng.Framework.Commons
 			Task.Run(() =>
 			{
 				_action();
+				_isComplete = true;
+			});
+		}
+
+		public WaitForTask(Func<Task> action)
+		{
+			_taskAction = action;
+			_isComplete = false;
+
+			Task.Run(async () =>
+			{
+				await _taskAction();
 				_isComplete = true;
 			});
 		}

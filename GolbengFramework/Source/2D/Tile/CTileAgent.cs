@@ -27,7 +27,6 @@ namespace Golbeng.Framework._2D.Tile
 		};
 	}
 
-
 	public partial class CTileAgent<TTileState>
 	{
 		public static CTileConfigure TileConfigure { get; set; } = new CTileConfigure(new Vector2Int(1, 1));
@@ -149,6 +148,12 @@ namespace Golbeng.Framework._2D.Tile
 			{
 				if(focusTile != null && registedTile == focusTile)
 					return GetBackgroundTileState(cellPosition);
+
+				// 예외 타일 속성 (범위는 지정되어 있지만 지나갈수 있는 규칙?)
+				if(registedTile.GetExcludeTileIndices(TileConfigure).Contains(cellPosition))
+				{
+					return registedTile.ExcludeTileType;
+				}
 
 				return registedTile.TileType;
 			}

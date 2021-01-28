@@ -6,9 +6,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+
 
 namespace Golbeng.Framework.Manager
 {
@@ -49,10 +51,14 @@ namespace Golbeng.Framework.Manager
 		// async await Version
 		public WaitForTask LoadAllTableAsync()
 		{
+			var methodInfo = typeof(CTableManager).GetMethod("LoadTable", BindingFlags.NonPublic | BindingFlags.Instance);
+			if(methodInfo == null)
+			{
+				return new WaitForTask(() => { });
+			}
+
 			var waitForTask = new WaitForTask(async () =>
 			{
-				var methodInfo = typeof(CTableManager).GetMethod("LoadTable");
-
 				List<Task> taskList = new List<Task>();
 				foreach (var table in _registerTableType)
 				{
@@ -70,20 +76,31 @@ namespace Golbeng.Framework.Manager
 			return waitForTask;
 		}
 
-		public void LoadTable<T>() where T : class, new()
+		private void LoadTable<T>() where T : class, new()
 		{
-			var container = _loader.LoadTable<T>();
-			if (container == null)
+			try
 			{
-				// Log 남기기
-				return;
+				var container = _loader.LoadTable<T>();
+				if(container == null)
+				{
+					Debug.Log($"{nameof(T)} LoadTable is null");
+					return;
+				}
+
+				lock(_conatiner)
+				{
+					Type type = typeof(T);
+					if (_conatiner.ContainsKey(type) == false)
+					{
+						_conatiner.Add(type, container);
+					}
+				}
+			}
+			catch(Exception e)
+			{
+				Debug.Log($"{e.Message} [{e.InnerException?.Message}]");
 			}
 
-			Type type = typeof(T);
-			if(_conatiner.ContainsKey(type) == false)
-			{
-				_conatiner.Add(type, container);
-			}
 		}
 
 		public IEnumerable<T> GetTableDatas<T>() where T : class
@@ -91,7 +108,7 @@ namespace Golbeng.Framework.Manager
 			Type type = typeof(T);
 
 			if (_conatiner.ContainsKey(type) == false)
-				yield return default(T);
+				yield break;
 
 			var items = _conatiner[type];
 

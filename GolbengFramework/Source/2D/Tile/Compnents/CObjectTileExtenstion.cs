@@ -13,5 +13,17 @@ namespace Golbeng.Framework._2D.Tile.Components
 		{
 			return tileConfigure.GetTileIndices(objectTile.transform.position, objectTile.TileSize);
 		}
+
+		public static IEnumerable<Vector2Int> GetExcludeTileIndices<TTileState>(this CObjectTileComponent<TTileState> objectTile, CTileConfigure tileConfigure)
+		{
+			var normalizeTilePosition = tileConfigure.NormalizeTilePosition(objectTile.transform.position, objectTile.TileSize);
+			var basisCellIndex = tileConfigure.ConvertToTileIndex(normalizeTilePosition, objectTile.TileSize);
+
+			var excludeTileIndicies = objectTile.ExcludeTileIndices.Select(t => {
+				return new Vector2Int(t.x + basisCellIndex.x, t.y + basisCellIndex.y);
+			});
+
+			return excludeTileIndicies;
+		}
 	}
 }

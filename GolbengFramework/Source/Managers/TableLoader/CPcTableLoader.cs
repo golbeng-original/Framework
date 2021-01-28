@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace Golbeng.Framework.Loader
 {
@@ -24,13 +25,25 @@ namespace Golbeng.Framework.Loader
 		{
 			var tableMeta = TableUtils.GetTableMeta<T>();
 			if (tableMeta == null)
-				return null;
+				return null;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
 
 			string loadablePath = Path.Combine(AssetsPath, tableMeta.DbName);
 			if (File.Exists(loadablePath) == false)
+			{
+				Debug.LogError($"{loadablePath} is not found");
 				return null;
+			}
 
-			return await LoadSqliteDB<T>(loadablePath);
+			try
+			{
+				var result = await LoadSqliteDB<T>(loadablePath);
+				return result;
+			}
+			catch(Exception e)
+			{
+				Debug.LogError($"{loadablePath} LoadSqliteDB error ({e.Message})");
+				return null;
+			}
 		}
 
 	}
