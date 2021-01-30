@@ -105,8 +105,10 @@ namespace Golbeng.Framework.State
 			_stateChangePredicateMapping.Add(type, func);
 		}
 
-		public void RegisterStateDependencyAction<T>(T state, CAction action)
+		public void RegisterStateDependencyAction<T>(T state, CAction action) where T : Enum
 		{
+			GetStateEventAgent<T>();
+
 			var key = (typeof(T), Convert.ToInt32(state));
 			if (_stateEventActionMapping.ContainsKey(key) == true)
 				return;
