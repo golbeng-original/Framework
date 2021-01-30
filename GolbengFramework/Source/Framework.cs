@@ -16,8 +16,20 @@ using Golbeng.Framework.Managers;
 
 namespace Golbeng.Framework
 {
-	public class FrameworkStarter
+	public class CFramework : MonoBehaviour
 	{
+		public virtual string InitalizeConfigureFile { get; } = null;
+
+		protected virtual void Awake()
+		{
+			Initalize(InitalizeConfigureFile);
+		}
+
+		protected virtual void Start()
+		{
+
+		}
+
 		public void Initalize(string configureFile = null)
 		{
 			switch (Application.platform)
