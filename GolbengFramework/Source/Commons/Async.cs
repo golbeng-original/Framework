@@ -40,6 +40,8 @@ namespace Golbeng.Framework.Commons
 
 			Task.Run(async () =>
 			{
+				//await _taskAction().ConfigureAwait(true);
+
 				await _taskAction();
 				_isComplete = true;
 			});

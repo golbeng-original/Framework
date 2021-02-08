@@ -22,10 +22,10 @@ namespace Golbeng.Framework.State
 			{
 				_actionAgent = actionAgent;
 
-				_Initialize();
+				OnInitialize();
 			}
 
-			protected virtual void _Initialize() { }
+			protected virtual void OnInitialize() { }
 
 			public void Start(params object[] param)
 			{
@@ -36,25 +36,25 @@ namespace Golbeng.Framework.State
 				_actionAgent.StartCoroutine(_corutine);
 			}
 
-			protected virtual void _Pause() { }
+			protected virtual void OnPause() { }
 
 			internal void Pause()
 			{
-				_Pause();
+				OnPause();
 				_isPause = true;
 			}
 
-			protected virtual void _Resume() { }
+			protected virtual void OnResume() { }
 
 			internal void Resume()
 			{
-				_Resume();
+				OnResume();
 				_isPause = false;
 			}
 
 			public void Stop()
 			{
-				_Stop();
+				OnStop();
 
 				_actionAgent.UnregisterStartAction(this);
 
@@ -67,7 +67,7 @@ namespace Golbeng.Framework.State
 				_isPause = false;
 			}
 
-			protected virtual void _Stop() { }
+			protected virtual void OnStop() { }
 
 			protected Coroutine Yield(YieldInstruction instruction = null)
 			{
@@ -104,14 +104,20 @@ namespace Golbeng.Framework.State
 				// 정지 중일 수 있다..
 				yield return Yield();
 
-				yield return Run(param);
+				OnBegin();
+
+				yield return OnRun(param);
+
+				OnEnd();
 
 				_actionAgent.UnregisterStartAction(this);
 
 				_corutine = null;
 			}
 
-			public abstract IEnumerator Run(params object[] param);
+			public abstract IEnumerator OnRun(params object[] param);
+			protected virtual void OnBegin() { }
+			protected virtual void OnEnd() { }
 		}
 	}
 

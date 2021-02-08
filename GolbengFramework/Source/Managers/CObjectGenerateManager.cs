@@ -25,6 +25,9 @@ namespace Golbeng.Framework.Managers
 
 			public GameObject ParentGameObject { get; private set; }
 
+			public int ActiveCount { get => _activeObjectPool.Count; }
+			public int PoolCount { get => _generatePool.Sum(kv => kv.Value.Count); }
+
 			public event GenerateHandler GenerateHandler;
 			public event DestoryHandler DestoryHandler;
 
@@ -241,6 +244,14 @@ namespace Golbeng.Framework.Managers
 			}
 
 			return null;
+		}
+
+		public int GetCount(TKey key)
+		{
+			if (_objectPool.ContainsKey(key) == false)
+				return 0;
+
+			return _objectPool[key].ActiveCount;
 		}
 	}
 }

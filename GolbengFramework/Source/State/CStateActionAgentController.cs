@@ -11,19 +11,31 @@ namespace Golbeng.Framework.State
 {
 	public partial class CStateActionAgentController : CActionAgentController
 	{
+		private bool _isEnable = false;
+
 		private Dictionary<Type, object> _stateEventAgnetMapping = new Dictionary<Type, object>();
 		private Dictionary<Type, Func<bool>> _stateChangePredicateMapping = new Dictionary<Type, Func<bool>>();
 		private Dictionary<(Type type, int state), object[]> _stateChangeParameters = new Dictionary<(Type type, int state), object[]>();
 
 		//
 		private Dictionary<(Type Type, int Value), CAction> _stateEventActionMapping = new Dictionary<(Type Type, int Value), CAction>();
-
 		public Animator Animator { get; private set; }
+		public bool IsEnable
+		{
+			get => _isEnable;
+			set
+			{
+				_isEnable = value;
+				Animator.enabled = value;
+			}
+		}
+
 
 		protected override void Awake()
 		{
 			Animator = GetComponent<Animator>();
-			Animator.enabled = false;
+			
+			IsEnable = false;
 		}
 
 		public void InitializeStateEventAgent()
@@ -212,7 +224,5 @@ namespace Golbeng.Framework.State
 				_stateChangeParameters[paramKey] = parameters;
 			}
 		}
-
 	}
-
 }
