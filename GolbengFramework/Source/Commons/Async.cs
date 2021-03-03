@@ -11,8 +11,7 @@ using UnityEngine;
 namespace Golbeng.Framework.Commons
 {
 	public delegate IEnumerator JobActionHandler(AsyncWorker.WorkArgs args);
-
-	public class WaitForTask : CustomYieldInstruction
+	public class WaitForTasks : CustomYieldInstruction
 	{
 		private bool _isComplete = false;
 		private Action _action;
@@ -21,7 +20,7 @@ namespace Golbeng.Framework.Commons
 		public bool IsDone { get => _isComplete == true ? true : false; }
 		public override bool keepWaiting { get => _isComplete == false ? true : false; }
 
-		public WaitForTask(Action action)
+		public WaitForTasks(Action action)
 		{
 			_action = action;
 			_isComplete = false;
@@ -33,21 +32,130 @@ namespace Golbeng.Framework.Commons
 			});
 		}
 
-		public WaitForTask(Func<Task> action)
+		public WaitForTasks(Func<Task> action)
 		{
 			_taskAction = action;
 			_isComplete = false;
 
 			Task.Run(async () =>
 			{
-				//await _taskAction().ConfigureAwait(true);
-
 				await _taskAction();
 				_isComplete = true;
 			});
 		}
 	}
 
+	public class WaitForCoroutineFunc<T> : CustomYieldInstruction
+	{
+		private bool _isComplete = false;
+		
+		public T Result { get; private set; }
+		public bool IsDone { get => _isComplete == true ? true : false; }
+		public override bool keepWaiting { get => _isComplete == false ? true : false; }
+
+		public WaitForCoroutineFunc(MonoBehaviour dispatcher, Func<T> func)
+		{
+			_isComplete = false;
+			dispatcher.StartCoroutine(Run(func));
+		}
+		private IEnumerator Run(Func<T> func)
+		{
+			Result = func();
+
+			yield return null;
+			_isComplete = true;
+		}
+	}
+
+	public class WaitFroCoroutineAction : CustomYieldInstruction
+	{
+		private bool _isComplete = false;
+
+		public bool IsDone { get => _isComplete == true ? true : false; }
+		public override bool keepWaiting { get => _isComplete == false ? true : false; }
+
+		public WaitFroCoroutineAction(MonoBehaviour dispatcher, Action action)
+		{
+			_isComplete = false;
+			dispatcher.StartCoroutine(Run(action));
+		}
+		private IEnumerator Run(Action action)
+		{
+			action();
+			yield return null;
+			_isComplete = true;
+		}
+	}
+
+
+	public class WaitForCoroutineTasks : CustomYieldInstruction
+	{
+		private class WaitForUnit : CustomYieldInstruction
+		{
+			private bool _isComplete = false;
+			private Action _action = null;
+
+			public bool IsDone { get => _isComplete == true ? true : false; }
+			public override bool keepWaiting { get => _isComplete == false ? true : false; }
+
+			public WaitForUnit(MonoBehaviour diaptcher, Action action)
+			{
+				_action = action;
+				_isComplete = false;
+
+				diaptcher.StartCoroutine(Run());
+			}
+
+			private IEnumerator Run()
+			{
+				_action?.Invoke();
+				yield return null;
+
+				_isComplete = true;
+			}
+		}
+
+		//
+		private MonoBehaviour _dispatcher = null;
+
+		private bool _isComplete = false;
+		private List<Action> _actions = new List<Action>();
+		private List<WaitForUnit> _actionProvider = new List<WaitForUnit>();
+
+		public bool IsDone { get => _isComplete == true ? true : false; }
+		public override bool keepWaiting { get => _isComplete == false ? true : false; }
+
+		public WaitForCoroutineTasks(MonoBehaviour dispatcher)
+		{
+			_dispatcher = dispatcher;
+		}
+
+		public void RegisterTask(Action action)
+		{
+			_actions.Add(action);
+		}
+
+		public void Run()
+		{
+			foreach (var action in _actions)
+			{
+				var unit = new WaitForUnit(_dispatcher, action);
+				_actionProvider.Add(unit);
+			}
+
+			_dispatcher.StartCoroutine(_IsComplete());
+		}
+
+		private IEnumerator _IsComplete()
+		{
+			foreach (var provider in _actionProvider)
+			{
+				yield return provider;
+			}
+
+			_isComplete = true;
+		}
+	}
 	public class AsyncWorker : CustomYieldInstruction
 	{
 		public class WorkArgs

@@ -25,7 +25,7 @@ namespace Golbeng.Framework.Input
 
 		public float RadiusRange { get; set; } = 0.15f;
 		public float SwipeSensitivity { get; set; } = 0.15f;
-		public float TimeSensitivity { get; set; } = 0.3f;
+		public float TimeSensitivity { get; set; } = 0.35f;
 
 		public Vector3 BeginTouchPos { get; private set; }
 		public Vector3 EndTouchPos { get; private set; }
@@ -47,10 +47,6 @@ namespace Golbeng.Framework.Input
 		{
 			if (UnityEngine.Input.GetMouseButtonDown(0))
 			{
-				//var hitTag = UInputManager.GetCurrentHitTag();
-				//if (hitTag.Equals("MoveableTile") == true)
-				//	return false;
-
 				Clear();
 
 				BeginTouchPos = UnityEngine.Input.mousePosition;

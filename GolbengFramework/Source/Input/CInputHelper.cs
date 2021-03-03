@@ -18,6 +18,15 @@ namespace Golbeng.Framework.Input
 			return hit.collider;
 		}
 
+		public static GameObject GetCurrentHitGameObject()
+		{
+			var collider = GetCurrentHitCollider2D();
+			if (collider == null)
+				return null;
+
+			return collider.gameObject;
+		}
+
 		public static string GetCurrentHitTag()
 		{
 			var collider = GetCurrentHitCollider2D();
@@ -25,6 +34,15 @@ namespace Golbeng.Framework.Input
 				return "";
 
 			return collider.gameObject.tag;
+		}
+
+		public static string GetCurrentHitLayer()
+		{
+			var collider = GetCurrentHitCollider2D();
+			if (collider == null)
+				return "";
+
+			return LayerMask.LayerToName(collider.gameObject.layer);
 		}
 
 		public static Vector3 GetTouchPoint(float zCoord = 0.0f)

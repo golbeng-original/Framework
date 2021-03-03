@@ -1,6 +1,7 @@
 ﻿using BestHTTP;
 using CommonPackage.Packet;
 using Golbeng.Framework.Commons;
+using Golbeng.Framework.Logger;
 using Golbeng.Framework.Managers.Connection;
 using System;
 using System.Collections;
@@ -24,8 +25,6 @@ namespace Golbeng.Framework.Managers
 			SIRNALR
 		}
 
-		private ILogger _logger;
-
 		private Queue<object> _recivedPackets = new Queue<object>();
 
 		private HttpConnection _httpConnection = null;
@@ -33,7 +32,7 @@ namespace Golbeng.Framework.Managers
 
 		public bool IsInitialize { get; private set; } = false;
 
-		public override void OnInitSingleton()
+		protected override void OnInitSingleton()
 		{
 			var defaultLogger = new BestHTTP.Logger.DefaultLogger();
 			defaultLogger.Level = BestHTTP.Logger.Loglevels.Error;
@@ -48,13 +47,13 @@ namespace Golbeng.Framework.Managers
 			HTTPManager.HTTP2Settings.MaxFrameSize = 1 * 1024 * 1024;
 			HTTPManager.HTTP2Settings.MaxIdleTime = TimeSpan.FromSeconds(120);
 
-			_logger = ManagerProvider.Logger;
-
 			_httpConnection = new HttpConnection(ManagerProvider.HttpConfig.ConnectUrl, ManagerProvider.HttpConfig.SendMethod);
 
 			_signalRConnection = new SignalRConnection(ManagerProvider.SignalRConfig.ConnectUrl,
 														ManagerProvider.SignalRConfig.SendMethod,
 														ManagerProvider.SignalRConfig.ReceiveMethod);
+
+			ManagerProvider.Logger.Verbose("CPacketManager", "OnInitSingleton");
 		}
 
 		public void Connect()

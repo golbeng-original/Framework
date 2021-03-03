@@ -20,7 +20,15 @@ namespace Golbeng.Framework.State
 		public bool Handled { get; set; } = false;
 	}
 
-	public partial class CStateEventAgent<TState>
+	public interface IStateEventAgent
+	{
+		void InitializeState();
+	}
+}
+
+namespace Golbeng.Framework.State
+{
+	public partial class CStateEventAgent<TState> : IStateEventAgent
 	{
 		public delegate bool StateEnterParamBehavoir(TState prevState, CStateEvnetAgentArgs args);
 		public delegate bool StateEnterBehavior(TState prevState);
@@ -66,7 +74,7 @@ namespace Golbeng.Framework.State
 		}
 	}
 
-	public partial class CStateEventAgent<TState>
+	public partial class CStateEventAgent<TState> : IStateEventAgent
 	{
 		private HashSet<TState> _registerState = new HashSet<TState>();
 		private Dictionary<TState, HashSet<TState>> _stateTransfroms = new Dictionary<TState, HashSet<TState>>();
@@ -75,6 +83,12 @@ namespace Golbeng.Framework.State
 		public TState CurrentState { get; private set; } = default(TState);
 
 		public bool IsCheckTransition { get; set; } = false;
+
+		public void InitializeState()
+		{
+			CurrentState = default(TState);
+			UpdateForceState(CurrentState, null);
+		}
 
 		public void RegisterTransfromState(TState fromState, TState toState)
 		{
@@ -151,12 +165,6 @@ namespace Golbeng.Framework.State
 				return;
 
 			behaviorInfo.OnExitBehavior(nextState);
-		}
-
-		public void InitializeState()
-		{
-			CurrentState = default(TState);
-			UpdateForceState(CurrentState, null);
 		}
 
 		public bool UpdateForceState(TState state, CStateEvnetAgentArgs args)

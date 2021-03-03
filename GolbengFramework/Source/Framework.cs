@@ -10,9 +10,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using ILogger = Golbeng.Framework.Commons.ILogger;
 using System.Collections;
 using Golbeng.Framework.Managers;
+using UnityEditor;
 
 namespace Golbeng.Framework
 {

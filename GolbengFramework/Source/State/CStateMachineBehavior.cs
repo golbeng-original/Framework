@@ -8,9 +8,11 @@ using UnityEngine;
 
 namespace Golbeng.Framework.State
 {
-	public class CStateMachineBehavior : StateMachineBehaviour
+	public abstract class CStateMachineBehavior : StateMachineBehaviour
 	{
-		private CStateActionAgentController GetCustomerStateDefine(Animator animator)
+		private CStateActionAgentStateUpdater _stateUpdater = null;
+
+		private CStateActionAgentController GetStateActionAgentController(Animator animator)
 		{
 			return animator.gameObject.GetComponent<CStateActionAgentController>();
 		}
@@ -22,22 +24,23 @@ namespace Golbeng.Framework.State
 			base.OnStateEnter(animator, stateInfo, layerIndex);
 		}
 
+		protected abstract void UpdateState(CStateActionAgentStateUpdater stateUpdater);
+
 		private void UpdateStateDefine(Animator animator)
 		{
-			var stateDefine = GetCustomerStateDefine(animator);
-			if (stateDefine != null)
+			if(_stateUpdater == null)
 			{
-				var methodInfo = stateDefine.GetType().GetMethod("UpdateStateFromMecanim", BindingFlags.Public | BindingFlags.Instance);
-				if (methodInfo != null)
-				{
-					var fields = GetType().GetFields(BindingFlags.Public | BindingFlags.Instance);
-					foreach (var field in fields)
-					{
-						var genericMethod = methodInfo.MakeGenericMethod(field.FieldType);
-						genericMethod.Invoke(stateDefine, new[] { field.GetValue(this) });
-					}
-				}
+				var controller = GetStateActionAgentController(animator);
+				if (controller == null)
+					return;
+
+				_stateUpdater = new CStateActionAgentStateUpdater(controller);
 			}
+
+			if (_stateUpdater == null)
+				return;
+
+			UpdateState(_stateUpdater);
 		}
 	}
 }

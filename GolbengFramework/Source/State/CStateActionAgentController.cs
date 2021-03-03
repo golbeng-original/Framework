@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Golbeng.Framework.Commons;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +10,29 @@ using UnityEngine;
 
 namespace Golbeng.Framework.State
 {
+	public class CStateActionAgentStateUpdater
+	{
+		private CStateActionAgentController _controller = null;
+
+		public CStateActionAgentStateUpdater(CStateActionAgentController controller)
+		{
+			_controller = controller;
+		}
+
+		public void UpdateState<T>(T state) where T : Enum
+		{
+			if (_controller == null)
+				return;
+
+			_controller.UpdateStateFromMecanim(state);
+		}
+	}
+
 	public partial class CStateActionAgentController : CActionAgentController
 	{
 		private bool _isEnable = false;
 
-		private Dictionary<Type, object> _stateEventAgnetMapping = new Dictionary<Type, object>();
+		private Dictionary<Type, IStateEventAgent> _stateEventAgnetMapping = new Dictionary<Type, IStateEventAgent>();
 		private Dictionary<Type, Func<bool>> _stateChangePredicateMapping = new Dictionary<Type, Func<bool>>();
 		private Dictionary<(Type type, int state), object[]> _stateChangeParameters = new Dictionary<(Type type, int state), object[]>();
 
@@ -42,11 +61,7 @@ namespace Golbeng.Framework.State
 		{
 			foreach (var stateAgent in _stateEventAgnetMapping.Values)
 			{
-				var methodInfo = stateAgent.GetType().GetMethod("InitializeState", BindingFlags.Public | BindingFlags.Instance);
-				if (methodInfo == null)
-					continue;
-
-				methodInfo.Invoke(stateAgent, null);
+				stateAgent.InitializeState();
 			}
 		}
 
@@ -190,7 +205,7 @@ namespace Golbeng.Framework.State
 				// 조건에서 실패함..
 				if (_stateChangePredicateMapping[type].Invoke() == false)
 				{
-					Debug.Log($"UpdateState Fail Predicate false paramName = {animteParameterName}, value = {state}");
+					ManagerProvider.Logger.Warning("CStateActionAgentController", $"UpdateState Fail Predicate false paramName = {animteParameterName}, value = {state}");
 					return;
 				}
 			}
@@ -209,7 +224,7 @@ namespace Golbeng.Framework.State
 				// 조건에서 실패함..
 				if (_stateChangePredicateMapping[type].Invoke() == false)
 				{
-					Debug.Log($"UpdateState Feil Predicate false paramName = {animteParameterName}, value = {state}");
+					ManagerProvider.Logger.Warning("CStateActionAgentController", $"UpdateState Feil Predicate false paramName = {animteParameterName}, value = {state}");
 					return;
 				}
 			}

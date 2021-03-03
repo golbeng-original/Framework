@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace Golbeng.Framework.Loader
 {
+	/*
 	public class CPcFileLoader : IFileLoader
 	{
 		protected override Task<Stream> _Load(string fullPath)
@@ -17,4 +18,5 @@ namespace Golbeng.Framework.Loader
 			return Task.FromResult<Stream>(File.OpenRead(fullPath));
 		}
 	}
+	*/
 }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Golbeng.Framework.Commons;
+using Golbeng.Framework.Managers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -125,29 +126,44 @@ namespace Golbeng.Framework.Manager
 			return _configureValues[firstKey][secondKey];
 		}
 
-		public WaitForTask Initialize(string fileName)
+		public WaitForCoroutineTasks LoadConfigureData(MonoBehaviour dispatcher, string fileName)
 		{
-			var waitForTask = new WaitForTask(async () =>
+			var waitForCoroutine = new WaitForCoroutineTasks(dispatcher);
+
+			waitForCoroutine.RegisterTask(() =>
 			{
-				var jsonContext = await LoadConfigure(fileName);
+				string fullPath = System.IO.Path.Combine(ManagerProvider.ConfigureAssetPath, fileName);
 
-				if (string.IsNullOrEmpty(jsonContext) == true)
-					return;
-
-				JObject rawRoot = JObject.Parse(jsonContext);
-
-				foreach (var rawBundle in rawRoot)
+				using (var stream = CResourceManager.Instance.FindStreamResource(fullPath))
 				{
-					if (_configureValues.ContainsKey(rawBundle.Key) == true)
-						continue;
+					if(stream == null)
+					{
+						return;
+					}
 
-					var bundle = ParseBundle(rawBundle.Value);
+					string jsonContext = "";
+					using (StreamReader reader = new StreamReader(stream))
+					{
+						jsonContext = reader.ReadToEnd();
+					}
 
-					_configureValues.Add(rawBundle.Key.ToLower(), bundle);
+					JObject rawRoot = JObject.Parse(jsonContext);
+					foreach (var rawBundle in rawRoot)
+					{
+						if (_configureValues.ContainsKey(rawBundle.Key) == true)
+							continue;
+
+						var bundle = ParseBundle(rawBundle.Value);
+
+						_configureValues.Add(rawBundle.Key.ToLower(), bundle);
+					}
 				}
+
 			});
 
-			return waitForTask;
+			waitForCoroutine.Run();
+
+			return waitForCoroutine;
 		}
 
 		private Dictionary<string, CCOnfigureValue> ParseBundle(JToken rawBundle)
@@ -165,7 +181,7 @@ namespace Golbeng.Framework.Manager
 
 				if(configureValue == null)
 				{
-					Debug.LogError($"[ConfigureManager] {unit.Name} config value is empty");
+					ManagerProvider.Logger.Error("CConfigureManager", $"{unit.Name} config value is empty");
 					continue;
 				}
 
@@ -184,7 +200,7 @@ namespace Golbeng.Framework.Manager
 				var parseResult = ParseConfigureValue(valueUnit.Value);
 				if(parseResult.value == null)
 				{
-					Debug.LogError($"[ConfigureManager] {valueUnit.Name} is ParseConfigureValue error");
+					ManagerProvider.Logger.Error("CConfigureManager", $"{valueUnit.Name} is ParseConfigureValue error");
 					continue;
 				}
 
@@ -194,7 +210,7 @@ namespace Golbeng.Framework.Manager
 			// 정상적인지 체크 
 			if(setValueList.Count == 0)
 			{
-				Debug.LogError($"[ConfigureManager] {property.Name} is empty");
+				ManagerProvider.Logger.Error("CConfigureManager", $"{property.Name} is empty");
 				return null;
 			}
 			
@@ -202,7 +218,7 @@ namespace Golbeng.Framework.Manager
 			bool existDefault = setValueList.Where(v => v.name.Equals("default", StringComparison.OrdinalIgnoreCase)).Any();
 			if(existDefault == false)
 			{
-				Debug.LogError($"[ConfigureManager] {property.Name} is not contain \"default\"");
+				ManagerProvider.Logger.Error("CConfigureManager", $"{property.Name} is not contain \"default\"");
 				return null;
 			}
 
@@ -210,7 +226,7 @@ namespace Golbeng.Framework.Manager
 			var smapleType = setValueList.First().type;
 			if (setValueList.TrueForAll(v => v.type == smapleType) == false)
 			{
-				Debug.LogError($"[ConfigureManager] {property.Name} not same each other");
+				ManagerProvider.Logger.Error("CConfigureManager", $"{property.Name} not same each other");
 				return null;
 			}
 
@@ -246,7 +262,7 @@ namespace Golbeng.Framework.Manager
 				case JTokenType.Boolean:
 					return (typeof(bool), jToken.ToObject<bool>());
 				default:
-					Debug.LogError("not allow Configure Value");
+					ManagerProvider.Logger.Warning("CConfigureManager","not allow Configure Value");
 					return (typeof(Nullable), null);
 			}
 		}

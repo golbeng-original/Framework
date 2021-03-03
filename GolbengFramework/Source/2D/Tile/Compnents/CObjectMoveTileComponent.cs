@@ -9,6 +9,7 @@ using UnityEngine;
 namespace Golbeng.Framework._2D.Tile.Components
 {
 	public delegate void MouseDownEventHandler<TTileState>(CObjectMoveTileComponent<TTileState> moveTIleComponent);
+	public delegate void MouseDragEventHandler<TTileState>(CObjectMoveTileComponent<TTileState> moveTIleComponent);
 	public delegate bool MouseUpEventHandler<TTileState>(CObjectMoveTileComponent<TTileState> moveTIleComponent);
 	public delegate void MouseEventFinishHandler<TTileState>(CObjectMoveTileComponent<TTileState> moveTIleComponent);
 
@@ -16,14 +17,26 @@ namespace Golbeng.Framework._2D.Tile.Components
 	{
 		private Vector3 _touchOffset;
 		private Vector3 _prevTilePosition;
+		private bool _isEnableMouseEvent = false;
 
 		public event MouseDownEventHandler<TTileState> MouseDownEventHandler;
+		public event MouseDragEventHandler<TTileState> MouseDragEventHandler;
 		public event MouseUpEventHandler<TTileState> MouseUpEventHandler;
 		public event MouseEventFinishHandler<TTileState> MouseEventFinishHandler;
 
+		public Action<bool> EnableMouseEventHandler { get; set; }
+
 		public bool IsMoveable { get; }
 
-		public bool IsEnableMouseEvent { get; set; } = false;
+		public bool IsEnableMouseEvent 
+		{
+			get => _isEnableMouseEvent;
+			set
+			{
+				EnableMouseEventHandler?.Invoke(value);
+				_isEnableMouseEvent = value;
+			}
+		}
 
 		public CObjectMoveTileComponent(bool isMoveable)
 		{
@@ -49,9 +62,7 @@ namespace Golbeng.Framework._2D.Tile.Components
 			var touchPos = GetTouchPosition();
 			_touchOffset = transform.position - touchPos;
 
-			if (MouseDownEventHandler != null)
-				MouseDownEventHandler(this);
-
+			MouseDownEventHandler?.Invoke(this);
 		}
 		private void OnMouseDrag()
 		{
@@ -63,6 +74,8 @@ namespace Golbeng.Framework._2D.Tile.Components
 
 			var touchPos = GetTouchPosition();
 			transform.position = touchPos + _touchOffset;
+
+			MouseDragEventHandler?.Invoke(this);
 		}
 		private void OnMouseUp()
 		{
@@ -83,10 +96,7 @@ namespace Golbeng.Framework._2D.Tile.Components
 				}
 			}
 
-			if(MouseEventFinishHandler != null)
-			{
-				MouseEventFinishHandler(this);
-			}
+			MouseEventFinishHandler?.Invoke(this);
 		}
 	}
 }

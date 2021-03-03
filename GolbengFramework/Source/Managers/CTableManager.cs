@@ -2,6 +2,7 @@
 
 using Golbeng.Framework.Commons;
 using Golbeng.Framework.Loader;
+using Golbeng.Framework.Managers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,43 +21,87 @@ namespace Golbeng.Framework.Manager
 
 		private Dictionary<Type, HashSet<TblBase>> _conatiner = new Dictionary<Type, HashSet<TblBase>>();
 
-		private ITableLoder _loader = null;
-
-		public override void OnInitSingleton()
+		private ITableLoder GetLoader()
 		{
-			// PC, Editor
-			if (ManagerProvider.IsEditMode == true || ManagerProvider.CurrentPlatform == ManagerProvider.Platform.Windows)
+			// Editor 상태에서 실행
+			if (ManagerProvider.IsEditMode == true)
 			{
-				_loader = new CPcTableLoader(ManagerProvider.RawTableAssestsPath);
-				return;
+				return new CEditModeTableLoader(CResourceManager.Instance, ManagerProvider.TableAssetPath);
 			}
 
-			// android
-			if (ManagerProvider.CurrentPlatform == ManagerProvider.Platform.Android)
-			{
-				_loader = new CAndroidTableLoader(ManagerProvider.RawTableAssestsPath, ManagerProvider.LoadTableAssestsPath);
-			}
-			// Iphone
-			else if (ManagerProvider.CurrentPlatform == ManagerProvider.Platform.IPhone)
-			{
-				//
-			}
+
+			// 실행 모드
+			return new CPlayModeTableLoader(CResourceManager.Instance, ManagerProvider.TableAssetPath, ManagerProvider.PersistentDataPath);
 		}
-		
+
 		public void RegisterTable<T>()
 		{
 			_registerTableType.Add(typeof(T));
 		}
 
+		public WaitFroCoroutineAction LoadTableAsync<T>(MonoBehaviour dispatcher) where T : class, new()
+		{
+			var action = new WaitFroCoroutineAction(dispatcher, () =>
+			{
+				LoadTable<T>();
+			});
+
+			return action;
+		}
+
+		// Bundle Load
+		/*
+		public WaitForCoroutineTasks LoadAllTableAsyncCorutine(MonoBehaviour dispatcher)
+		{
+			var worker = new WaitForCoroutineTasks(dispatcher);
+
+			var loadTableMethodInfo = typeof(CTableManager).GetMethod("LoadTable", BindingFlags.NonPublic | BindingFlags.Instance);
+			if (loadTableMethodInfo != null)
+			{
+				foreach (var table in _registerTableType)
+				{
+					worker.RegisterTask(() =>
+					{
+						var loadTableMethod = loadTableMethodInfo.MakeGenericMethod(table);
+						loadTableMethod.Invoke(this, null);
+					});
+				}
+			}
+
+			worker.Run();
+
+			return worker;
+		}
+		*/
+
 		// async await Version
+		/*
 		public WaitForTask LoadAllTableAsync()
 		{
-			var methodInfo = typeof(CTableManager).GetMethod("LoadTable", BindingFlags.NonPublic | BindingFlags.Instance);
-			if(methodInfo == null)
+			var loadTableMethodInfo = typeof(CTableManager).GetMethod("LoadTable", BindingFlags.NonPublic | BindingFlags.Instance);
+			if(loadTableMethodInfo == null)
 			{
 				return new WaitForTask(() => { });
 			}
 
+			// prepare
+			foreach (var table in _registerTableType)
+			{
+				var loader = GetLoader();
+
+				var prepareMethodInfo = loader.GetType().GetMethod("Prepare", BindingFlags.Public | BindingFlags.Instance);
+				if (prepareMethodInfo == null)
+					continue;
+
+				var prepareMethod = prepareMethodInfo.MakeGenericMethod(table);
+				if (prepareMethod == null)
+					continue;
+
+				prepareMethod.Invoke(loader, null);
+				_matchTableLoader.Add(table, loader);
+			}
+
+			// Load Tasks...
 			var waitForTask = new WaitForTask(async () =>
 			{
 				List<Task> taskList = new List<Task>();
@@ -64,7 +109,7 @@ namespace Golbeng.Framework.Manager
 				{
 					var task = Task.Run(() =>
 					{
-						var loadTableMethod = methodInfo.MakeGenericMethod(table);
+						var loadTableMethod = loadTableMethodInfo.MakeGenericMethod(table);
 						loadTableMethod.Invoke(this, null);
 					});
 					taskList.Add(task);
@@ -75,32 +120,35 @@ namespace Golbeng.Framework.Manager
 
 			return waitForTask;
 		}
+		*/
 
 		private void LoadTable<T>() where T : class, new()
 		{
+			var loader = GetLoader();
+
 			try
 			{
-				var container = _loader.LoadTable<T>();
-				if(container == null)
+				var container = loader.LoadTable<T>();
+				if (container == null)
 				{
-					Debug.Log($"{nameof(T)} LoadTable is null");
+					ManagerProvider.Logger.Error("CTableManager", $"{nameof(T)} LoadTable is null");
 					return;
 				}
 
-				lock(_conatiner)
+				lock (_conatiner)
 				{
-					Type type = typeof(T);
+					var type = typeof(T);
+
 					if (_conatiner.ContainsKey(type) == false)
 					{
 						_conatiner.Add(type, container);
 					}
 				}
 			}
-			catch(Exception e)
+			catch (Exception e)
 			{
-				Debug.Log($"{e.Message} [{e.InnerException?.Message}]");
+				ManagerProvider.Logger.Exception("CTableMaanger", "LoadTable Exception", e);
 			}
-
 		}
 
 		public IEnumerable<T> GetTableDatas<T>() where T : class

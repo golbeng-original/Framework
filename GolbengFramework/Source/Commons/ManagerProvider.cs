@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Golbeng.Framework.Logger;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -48,14 +49,31 @@ namespace Golbeng.Framework.Commons
 
 		public static string LoadTableAssestsPath { get => System.IO.Path.Combine(PersistentDataPath, _staticReleativeTablePath); }
 		public static string RawTableAssestsPath { get => System.IO.Path.Combine(StreamingAssestsPath, _staticReleativeTablePath); }
-
 		public static string LoadStringDataAssestsPath { get => System.IO.Path.Combine(PersistentDataPath, _staticReleativeStringPath); }
 		public static string RawStringDataAssestsPath { get => System.IO.Path.Combine(StreamingAssestsPath, _staticReleativeStringPath); }
+
+		public static string ConfigureAssetPath { get => "Assets/_Data/Config"; }
+		public static string StringAssetPath { get => "Assets/_Data/String"; }
+		public static string TableAssetPath { get => "Assets/_Data/Table"; }
 
 		public static HttpConfigure HttpConfig { get; private set; } = new HttpConfigure();
 
 		public static WebSocketConfigure SignalRConfig { get; private set; } = new WebSocketConfigure();
 
-		public static ILogger Logger { get; set; } = new BaseLogger();
+		private static ILogger _logger = new CDefaultLogger();
+		public static ILogger Logger 
+		{
+			get => _logger;
+			set
+			{
+				if(_logger.GetType() == value.GetType())
+					return;
+
+				if (_logger != null)
+					_logger.Dispose();
+
+				_logger = value;
+			}
+		} 
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using CommonPackage.String;
+using Golbeng.Framework.Managers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,14 +11,25 @@ namespace Golbeng.Framework.Loader
 {
 	public abstract class IFileLoader
 	{
-		public Stream Load(string fullPath)
+		protected CResourceManager ResourceManager { get; }
+
+		public IFileLoader(CResourceManager resourceManager)
 		{
+			ResourceManager = resourceManager;
+		}
+
+		public Stream Load(string resourcePath)
+		{
+			/*
 			var task = _Load(fullPath);
 			task.Wait();
 
 			return task.Result;
+			*/
+
+			return _Load(resourcePath);
 		}
 
-		protected abstract Task<Stream> _Load(string fullPath);
+		protected abstract Stream _Load(string resourcePath);
 	}
 }

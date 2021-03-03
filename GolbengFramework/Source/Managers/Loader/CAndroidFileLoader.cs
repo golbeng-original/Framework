@@ -9,6 +9,7 @@ using UnityEngine.Networking;
 
 namespace Golbeng.Framework.Loader
 {
+	/*
 	public class CAndroidFileLoader : IFileLoader
 	{
 		protected override async Task<Stream> _Load(string fullPath)
@@ -43,4 +44,5 @@ namespace Golbeng.Framework.Loader
 			}
 		}
 	}
+	*/
 }
