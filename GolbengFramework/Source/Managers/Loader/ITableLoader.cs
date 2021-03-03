@@ -21,93 +21,6 @@ namespace Golbeng.Framework.Loader
 			AssetsPath = targetTablePath;
 		}
 
-		/*
-		protected HashSet<TblBase> LoadSqliteDB<T>(string path) where T : new()
-		{
-			var tableMeta = TableUtils.GetTableMeta<T>();
-			if (tableMeta == null)
-				throw new Exception("Type is not TableData");
-
-			string connectionPath = $"URI=file:{path}";
-			var sqliteConnection = new SqliteConnection(connectionPath);
-
-			try
-			{
-				sqliteConnection.Open();
-
-				var contaner = new HashSet<TblBase>();
-				using (var cmd = sqliteConnection.CreateCommand())
-				{
-					cmd.CommandText = $"SELECT * FROM {tableMeta.TableName}";
-
-					using (var reader = cmd.ExecuteReader())
-					{
-						Type newTblType = typeof(T);
-						var properties = newTblType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-
-						while (reader.Read())
-						{
-							TblBase newTbl = new T() as TblBase;
-							if (newTbl == null)
-								break;
-
-							foreach (var property in properties)
-							{
-								int ordinal = -1;
-								try
-								{
-									ordinal = reader.GetOrdinal(property.Name);
-								}
-								catch { }
-
-								if (ordinal == -1)
-									continue;
-
-								if (property.PropertyType == typeof(int))
-								{
-									int value = reader.GetInt32(ordinal);
-									property.SetValue(newTbl, value);
-								}
-								else if (property.PropertyType == typeof(uint))
-								{
-									uint value = (uint)reader.GetInt64(ordinal);
-									property.SetValue(newTbl, value);
-								}
-								else if (property.PropertyType == typeof(float))
-								{
-									float value = reader.GetFloat(ordinal);
-									property.SetValue(newTbl, value);
-								}
-								else if (property.PropertyType == typeof(string))
-								{
-									string value = reader.GetString(ordinal);
-									property.SetValue(newTbl, value);
-								}
-								else if (property.PropertyType == typeof(bool))
-								{
-									bool value = reader.GetBoolean(ordinal);
-									property.SetValue(newTbl, value);
-								}
-							}
-
-							contaner.Add(newTbl);
-						}
-					}
-				}
-
-				return contaner;
-			}
-			catch (Exception e)
-			{
-				throw e;
-			}
-			finally
-			{
-				sqliteConnection.Close();
-			}
-		}
-		*/
-
 		protected async Task<HashSet<TblBase>> LoadSqliteDBAsync<T>(string path) where T : new()
 		{
 			var tableMeta = TableUtils.GetTableMeta<T>();
@@ -261,7 +174,7 @@ namespace Golbeng.Framework.Loader
 									bool value = reader.GetBoolean(ordinal);
 									newTbl.SetPropertyValue(i, value);
 								}
-								else if (propertyInfo?.type == typeof(Enum))
+								else if (propertyInfo?.type.IsEnum == true)
 								{
 									int value = reader.GetInt32(ordinal);
 									newTbl.SetPropertyValue(i, value);

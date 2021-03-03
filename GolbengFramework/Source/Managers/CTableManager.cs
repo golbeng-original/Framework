@@ -29,7 +29,6 @@ namespace Golbeng.Framework.Manager
 				return new CEditModeTableLoader(CResourceManager.Instance, ManagerProvider.TableAssetPath);
 			}
 
-
 			// 실행 모드
 			return new CPlayModeTableLoader(CResourceManager.Instance, ManagerProvider.TableAssetPath, ManagerProvider.PersistentDataPath);
 		}
@@ -165,27 +164,32 @@ namespace Golbeng.Framework.Manager
 				yield return item as T;
 			}
 		}
-		public T GetTableData<T>(uint primaryKey) where T : TblBase
+		
+		public T GetTableData<T, U>(U primaryKey) where T : TblBase where U : struct
 		{
 			Type type = typeof(T);
-
 			if (_conatiner.ContainsKey(type) == false)
 				return default(T);
 
-			var items = _conatiner[type];
+			long queryPrimaryKey = TblBase.ConvertKey(primaryKey);
 
-			return items.SingleOrDefault(tblBase => tblBase.primarykey == primaryKey) as T;
+			var items = _conatiner[type];
+			return items.SingleOrDefault(TblBase => TblBase.queryPrimaryKey == queryPrimaryKey) as T;
 		}
-		public T GetTableData<T>(uint primaryKey, uint secondaryKey) where T : TblBase
+
+		public T GetTableData<T, U, V>(U primaryKey, V secondaryKey) where T : TblBase where U : struct where V : struct
 		{
 			Type type = typeof(T);
 
 			if (_conatiner.ContainsKey(type) == false)
 				return default(T);
 
+			long queryPrimaryKey = TblBase.ConvertKey(primaryKey);
+			long querySecondaryKey = TblBase.ConvertKey(secondaryKey);
+
 			var items = _conatiner[type];
 
-			return items.SingleOrDefault(tblBase => tblBase.primarykey == primaryKey && tblBase.secondarykey == secondaryKey) as T;
+			return items.SingleOrDefault(tblBase => tblBase.queryPrimaryKey == queryPrimaryKey && tblBase.querySecondaryKey == querySecondaryKey) as T;
 		}
 	}
 }
